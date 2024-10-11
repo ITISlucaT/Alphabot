@@ -1,0 +1,7 @@
+1 Tcp up[no mov]
+2 mandare movimento
+3 implementare pynput "W" --> avanti
+                        se rilascio si ferma
+
+4 gestire tutti i tasti
+5 gestire connection error (gestire con thread e altro socket)
