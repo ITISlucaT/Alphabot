@@ -4,7 +4,6 @@ from pynput import keyboard
 server_address = ("192.168.1.149", 6971)
 BUFFER_SIZE = 4096
 
-# Mappa dei tasti con i comandi corrispondenti
 key_command_map = {
     'w': 'forward',
     's': 'backward',
@@ -12,7 +11,7 @@ key_command_map = {
     'a': 'left'
 }
 
-last_command = None  # Variabile per memorizzare l'ultimo comando inviato
+last_command = None  
 
 def send_command(tcp_client_socket, command):
     """Invia un comando valido al server se è diverso dall'ultimo comando."""
