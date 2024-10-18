@@ -1,9 +1,7 @@
-# TODO: Remove this when we remove
-
 import socket
 import AlphaBot as ab
 
-server_address = ("192.168.1.135", 6971)
+server_address = ("192.168.1.149", 6971)
 BUFFER_SIZE = 4096 
 
 BOT_SPEED = 50
@@ -36,15 +34,12 @@ try:
     while True:
        
         data = conn.recv(BUFFER_SIZE).decode("utf-8")
-        #command, value = data.split(" ")
-        #print(f"Command: {command} value {value}")
         
-        if data == commands_list[0]: 
-            print(f"Mi sto muovento avanti")
-            alphaB.forward(BOT_SPEED)
-        elif data == commands_list[1]: alphaB.backward(BOT_SPEED)
-        elif data == commands_list[2]: alphaB.right(BOT_SPEED)
-        elif data == commands_list[3]: alphaB.left(BOT_SPEED)
+        if data == commands_list[0]: alphaB.forward()
+        elif data == commands_list[1]: alphaB.backward()
+        elif data == commands_list[2]: alphaB.right()
+        elif data == commands_list[3]: alphaB.left()
+        else: alphaB.stop()
 
         if not data:
             break  

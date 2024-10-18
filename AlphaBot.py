@@ -1,5 +1,4 @@
 import RPi.GPIO as GPIO
-import time
 
 class AlphaBot(object):
 	
@@ -19,7 +18,7 @@ class AlphaBot(object):
 		GPIO.setup(self.IN4,GPIO.OUT)
 		GPIO.setup(self.ENA,GPIO.OUT)
 		GPIO.setup(self.ENB,GPIO.OUT)
-		self.forward()
+		#self.forward()
 		self.PWMA = GPIO.PWM(self.ENA,500)
 		self.PWMB = GPIO.PWM(self.ENB,500)
 		self.PWMA.start(50)
