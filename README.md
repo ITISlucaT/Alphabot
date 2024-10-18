@@ -1,6 +1,6 @@
 # AlphaBot
 
-![AlphaBot](https://www.google.com/imgres?q=alphabot&imgurl=https%3A%2F%2Ffuturanet.it%2Ffuturashop%2Fimage%2Fcatalog%2Fdata%2Frobotica%2F2850-ALPHABOT%2F2850-ALPHABOT_4.jpg&imgrefurl=https%3A%2F%2Ffuturanet.it%2Fprodotto%2Falphabot-piattaforma-robotica-in-kit%2F&docid=MTcQ49pahtV8WM&tbnid=9gXQnKebNSK1IM&vet=12ahUKEwjGy4_2qpiJAxUggf0HHY02BFwQM3oECGoQAA..i&w=600&h=600&hcb=2&ved=2ahUKEwjGy4_2qpiJAxUggf0HHY02BFwQM3oECGoQAA)  <!-- Sostituisci con un link all'immagine del robot -->
+![AlphaBot](itisLOGO.jpg)  <!-- Sostituisci con un link all'immagine del robot -->
 
 ## Introduzione
 
