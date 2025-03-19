@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Segnala guasto</title>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="./assets/logos/faviconWhite.png" type="image/png" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="./assets/logos/faviconBlack.png" type="image/png" media="(prefers-color-scheme: light)">
+</head>
+<body>
+  <link rel="stylesheet" href="./assets/styles/base.css">
+  <link rel="stylesheet" href="./assets/styles/style_index.css">
+  <link rel="stylesheet" href="./assets/styles/style_reports.css">
+  
+  <div id="divFormContainer">
+    <form id="reportForm">
+      <h2>Segnala operazione su punto luce</h2>
+      <label for="inptEmail" id="userEmail"></label>
+      <label for="slctReport">Seleziona il guasto da risolvere:</label>
+      <select id="slctReport" class="base-select">
+        <option value="operationWithoutReport">Guasto risolto senza segnalazione</option>
+      </select>
+      <p>N.B. selezionare il campo "Guasto risolto senza segnalazione" per risolvere un guasto non segnalato</p>
+      <label for="slctTypeReport">Seleziona il tipo di intervento:</label>
+      <select id="slctTypeReport" class="base-select">
+        <option value="MADE_SAFE_BUT_SYSTEM_NEEDS_RESTORING">Messa in sicurezza ma da ripristinare impianto</option>
+        <option value="FAULT_ELIMINATED_AND_SYSTEM_RESTORED">Guasto eliminato e impianto ripristinato</option>
+        <option value="OTHER">Altro</option>
+      </select>
+      <label for="txtDesc">Note: </label>
+      <textarea rows="5" cols="60" id="txtDesc" placeholder="Inserisci note sulla operazione effettuata" class="base-textarea"></textarea>
+      <br>
+      <button type="submit" id="btnSend" class="base-btn">REGISTRA INTERVENTO</button>
+    </form>
+
+  </div>
+
+  <script>
+  const BASE_URL = 'https://lighting-map.glitch.me'; 
+    const divFormContainer = document.getElementById("divFormContainer");
+    const reportForm = document.getElementById('reportForm')
+    const slctTypeReport = document.getElementById('slctTypeReport')
+    const txtDesc = document.getElementById('txtDesc')
+    const loading = document.getElementById('loading');
+    const slctReport = document.getElementById('slctReport');
+    const inptEmail = document.getElementById('inptEmail');
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    const userEmail = document.getElementById('userEmail')
+
+
+    const translation_report_type = {
+      "LIGHT_POINT_OFF": "Punto luce spento",
+      "PLANT_OFF": "Impianto spento",
+      "DAMAGED_COMPLEX": "Complesso danneggiato",
+      "DAMAGED_SUPPORT": "Morsettiera rotta",
+      "BROKEN_TERMINAL_BLOCK": "Sostegno danneggiato",
+      "BROKEN_PANEL": "Quadro danneggiato",
+      "OTHER": "Altro"
+  }  
+
+  userEmail.innerHTML = 'Email attualmente in uso: '+userData.email
+
+  function translateString(englishString) {
+      return translation_report_type[englishString] || englishString;
+    }
+
+
+    function getQueryParams() {
+      let params = {};
+      let queryString = window.location.search.substring(1);
+      let queries = queryString.split("&");
+      for (let i = 0; i < queries.length; i++) {
+        let pair = queries[i].split("=");
+        params[pair[0]] = decodeURIComponent(pair[1]);
+      }
+      return params;
+    }
+
+    async function createReportSelect(){
+      const response = await getData(params.comune, params.numeroPalo);
+      response.forEach(report =>{
+        const dateString = report.report_date.substring(0,10);
+        const type = translateString(report.report_type);
+        createOptionForSelect(slctReport, type +" "+ report.report_time + " " + dateString, report._id)
+      })
+    }
+    
+    async function getData(th, n_pl) {
+      try {
+        const response = await fetch(`${BASE_URL}/townHalls/lightpoints/getActiveReports?name=${th}&numero_palo=${n_pl}`)
+        if (!response.ok) {
+          throw new Error('Network response was not ok ' + response.statusText);
+        }
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('There has been a problem with your fetch operation:', error);
+      }
+    }
+
+    function createOptionForSelect(object, text, value) {
+      let option = document.createElement("option");
+      option.text = text
+      option.value = value;
+      object.add(option);
+    }
+
+    reportForm.addEventListener('submit', async (e)=> {
+      e.preventDefault();
+      let var_is_solved = slctTypeReport.value === "FAULT_ELIMINATED_AND_SYSTEM_RESTORED";
+
+      const formData = {
+        operation_type: slctTypeReport.value,
+        note: txtDesc.value,
+        name: params.comune,
+        numero_palo: params.numeroPalo,
+        email: userData.email,
+        id_segnalazione: slctReport.value === "operationWithoutReport" ? null : slctReport.value,
+        is_solved: var_is_solved,
+        date: new Date()
+      };
+
+      clearAllChildren(divFormContainer);
+      createLoader();
+
+      try {
+        const response = await fetch(`${BASE_URL}/addOperation`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        // if (!response.ok) {
+        //   throw new Error(`Operazione non riuscita, errore durante la comunicazione`);
+        // }
+
+        const result = await response.text() // Assumendo che il server restituisca JSON
+        clearAllChildren(divFormContainer);
+        createCard(result);
+      } catch (error) {
+        console.error('Errore durante la fetch:', error);
+        clearAllChildren(divFormContainer);
+        createCard(error.message, false); // Assumendo che tu abbia una funzione per mostrare messaggi di errore
+      }
+    });
+
+function clearAllChildren(elem) {
+  while (elem.firstChild) {
+    elem.removeChild(elem.firstChild);
+  }
+}
+
+function createLoader() {
+      const loader = document.createElement('div');
+      loader.className = 'loader';
+
+      for (let i = 0; i < 3; i++) {
+        const circle = document.createElement('div');
+        circle.className = 'circle';
+        loader.appendChild(circle);
+      }
+
+      const square = document.createElement('div');
+      square.className = 'square';
+      loader.appendChild(square);
+
+      divFormContainer.appendChild(loader);
+    }
+
+function createCard(msgText, isSuccess  = true) {
+      const divFormContainer = document.getElementById('divFormContainer');
+
+      const card = document.createElement('div');
+      card.id = 'card';
+      card.className = 'animated fadeIn';
+
+      const upperSide = document.createElement('div');
+      upperSide.id = 'upper-side';
+
+      let svg, status;
+      if (isSuccess) {
+        upperSide.style.backgroundColor = '#57A773';
+        svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('version', '1.1');
+        svg.setAttribute('id', 'checkmark');
+        svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+        svg.setAttribute('x', '0px');
+        svg.setAttribute('y', '0px');
+        svg.setAttribute('xml:space', 'preserve');
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M131.583,92.152l-0.026-0.041c-0.713-1.118-2.197-1.447-3.316-0.734l-31.782,20.257l-4.74-12.65 c-0.483-1.29-1.882-1.958-3.124-1.493l-0.045,0.017c-1.242,0.465-1.857,1.888-1.374,3.178l5.763,15.382 c0.131,0.351,0.334,0.65,0.579,0.898c0.028,0.029,0.06,0.052,0.089,0.08c0.08,0.073,0.159,0.147,0.246,0.209 c0.071,0.051,0.147,0.091,0.222,0.133c0.058,0.033,0.115,0.069,0.175,0.097c0.081,0.037,0.165,0.063,0.249,0.091 c0.065,0.022,0.128,0.047,0.195,0.063c0.079,0.019,0.159,0.026,0.239,0.037c0.074,0.01,0.147,0.024,0.221,0.027 c0.097,0.004,0.194-0.006,0.292-0.014c0.055-0.005,0.109-0.003,0.163-0.012c0.323-0.048,0.641-0.16,0.933-0.346l34.305-21.865 C131.967,94.755,132.296,93.271,131.583,92.152z');
+        svg.appendChild(path);
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('fill', 'none');
+        circle.setAttribute('stroke', '#ffffff');
+        circle.setAttribute('stroke-width', '5');
+        circle.setAttribute('stroke-miterlimit', '10');
+        circle.setAttribute('cx', '109.486');
+        circle.setAttribute('cy', '104.353');
+        circle.setAttribute('r', '32.53');
+        svg.appendChild(circle);
+        status = document.createElement('h3');
+        status.id = 'status';
+        status.textContent = 'Successo';
+      }else{
+        upperSide.style.backgroundColor = '#D75A4A';
+        const svgNS = "http://www.w3.org/2000/svg";
+        svg = document.createElementNS(svgNS, 'svg');
+        svg.setAttribute('version', '1.1');
+        svg.setAttribute('id', 'error-icon');
+        svg.setAttribute('viewBox', '0 0 50 50');
+        svg.setAttribute('xml:space', 'preserve');
+
+        const circle = document.createElementNS(svgNS, 'circle');
+        circle.setAttribute('style', 'fill:#D75A4A;');
+        circle.setAttribute('cx', '25');
+        circle.setAttribute('cy', '25');
+        circle.setAttribute('r', '25');
+        svg.appendChild(circle);
+
+        const polyline1 = document.createElementNS(svgNS, 'polyline');
+        polyline1.setAttribute('style', 'fill:none;stroke:#FFFFFF;stroke-width:2;stroke-linecap:round;stroke-miterlimit:10;');
+        polyline1.setAttribute('points', '16,34 25,25 34,16');
+        svg.appendChild(polyline1);
+
+        const polyline2 = document.createElementNS(svgNS, 'polyline');
+        polyline2.setAttribute('style', 'fill:none;stroke:#FFFFFF;stroke-width:2;stroke-linecap:round;stroke-miterlimit:10;');
+        polyline2.setAttribute('points', '16,16 25,25 34,34');
+        svg.appendChild(polyline2);
+        status = document.createElement('h3');
+        status.id = 'status';
+        status.textContent = 'Errore';
+
+      }
+      
+
+      upperSide.appendChild(svg);
+      upperSide.appendChild(status);
+
+      const lowerSide = document.createElement('div');
+      lowerSide.id = 'lower-side';
+
+      const message = document.createElement('p');
+      message.id = 'message';
+      message.textContent = msgText;
+      if(!isSuccess){ 
+        const ripBtn = document.createElement('a');
+        ripBtn.id = 'ripBtn';
+        ripBtn.textContent = 'Riprova';
+        ripBtn.href = "#"; // Aggiungi un href per comportarsi come un link
+        ripBtn.onclick = function() {
+          window.location.reload(); // Questo ricaricherà la pagina
+        };
+        lowerSide.appendChild(ripBtn);
+      }
+
+      const contBtn = document.createElement('a');
+      contBtn.href = 'resource.html';
+      contBtn.id = 'contBtn';
+      contBtn.textContent = 'Torna alla home';
+
+      lowerSide.appendChild(message);
+      
+      lowerSide.appendChild(contBtn);
+
+      card.appendChild(upperSide);
+      card.appendChild(lowerSide);
+
+      divFormContainer.appendChild(card);
+    }
+
+
+  // Recuperare i parametri dall'URL
+  let params = getQueryParams();
+  document.title = `Segnala operazione PL ${params.numeroPalo}`;
+  createReportSelect();
+  </script>
+</body>
+</html>

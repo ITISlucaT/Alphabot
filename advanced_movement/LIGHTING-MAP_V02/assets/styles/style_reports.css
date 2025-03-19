@@ -1,0 +1,193 @@
+/* Imposta il body per il layout del form */
+body {
+  display: flex;
+  justify-content: center;  /* Centra orizzontalmente */
+  align-items: center;      /* Centra verticalmente */
+  min-height: 100vh;        /* Copre l'intera altezza dello schermo */
+  margin: 0;
+}
+
+/* Il form si adatta all'altezza del viewport */
+form {
+  height: 100vh;  /* Il form copre l'intera altezza della finestra */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;  /* Centra gli elementi verticalmente all'interno del form */
+  align-items: center;      /* Centra gli elementi orizzontalmente */
+  padding: 2rem;
+  max-width: 90%;           /* Limita la larghezza del form */
+  background: var(--primary-lighter-color);  /* Puoi mantenere lo stile del background */
+  border: .2rem solid var(--accent-color);   /* Bordi del form */
+  border-radius: .5rem;     /* Arrotonda i bordi */
+}
+
+/* Testi e titoli */
+h2 {
+  font-size: 26px;
+  text-align: center;
+  color: #bcbcbc ;
+}
+
+p {
+  color: #bcbcbc ;
+  text-align: center;
+  font-size: smaller;
+}
+
+label {
+  color: #ffffff;
+}
+
+/* Pulsanti */
+button.base-btn {
+  width: 100%;               /* Rende il pulsante largo quanto il contenitore */
+  padding: 15px 0;           /* Aumenta il padding per una maggiore altezza */
+  color: #bcbcbc;
+  font-size: 16px;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  outline: none;
+  text-align: center;         /* Centra il testo */
+  margin-bottom: 1.5rem;      /* Aggiunge margine sotto il pulsante */
+}
+
+.base-btn:hover {
+  background: #bcbcbc;
+  color: #000000;
+  border-radius: 5px;
+  box-shadow: 0 0 5px #ffffff,
+              0 0 25px #bdbbbb,
+              0 0 50px #8d8d8d,
+              0 0 100px #000000;
+}
+
+/* Gestione reattiva per schermi piccoli */
+@media (max-width: 768px) {
+  form {
+      padding: 1.5rem;
+      max-width: 100%;  /* Il form occupa l'intera larghezza su dispositivi più piccoli */
+  }
+  
+  button.base-btn {
+      font-size: 14px;   /* Riduce la dimensione del testo sui pulsanti su dispositivi più piccoli */
+      padding: 12px 0;   /* Riduce leggermente il padding dei pulsanti */
+  }
+  
+  h2 {
+      font-size: 22px;   /* Riduce la dimensione del titolo su schermi più piccoli */
+  }
+  
+  p {
+      font-size: 12px;   /* Riduce la dimensione del testo per i paragrafi */
+  }
+}
+
+/* Input e selezione */
+input.base-input, select.base-select, textarea.base-textarea {
+  width: 100%;
+  padding: 10px 0;
+  font-size: 16px;
+  color: #bcbcbc;
+  /*margin-bottom: 30px;*/
+  border: none;
+  border-bottom: 1px solid #fff;
+  outline: none;
+  background: transparent;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--accent-color);
+}
+
+.input-label, .textarea-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 10px 0;
+  font-size: 16px;
+  color: #bcbcbc;
+  pointer-events: none;
+  transition: .5s;
+}
+
+input:focus ~ .input-label, input:valid ~ .input-label,
+textarea:focus ~ .textarea-label, textarea:valid ~ .textarea-label {
+  top: -20px;
+  color: #bcbcbc ;
+  font-size: 12px;
+}
+
+/* Animazione del loader */
+.loader {
+  display: flex;
+  justify-content: space-between;
+  width: 100px;
+  margin-top: 1rem;  /* Aggiungi un po' di spazio sopra il loader */
+}
+
+.circle {
+  width: 20px;
+  height: 20px;
+  background-color: #fff;
+  border-radius: 50%;
+  animation: fade 1s infinite;
+}
+
+.circle:nth-child(1) { animation-delay: 0.2s; }
+.circle:nth-child(2) { animation-delay: 0.4s; }
+.circle:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes fade {
+  0%, 20%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
+
+/* Stile per il card */
+#card {
+  position: relative;
+  top: 110px;
+  width: 320px;
+  text-align: center;
+  margin: auto;
+  font-family: "Source Sans Pro", sans-serif;
+}
+
+#upper-side {
+  padding: 2em;
+  background-color: #4f514d;
+  color: #fff;
+  border-top-right-radius: 8px;
+  border-top-left-radius: 8px;
+}
+
+#lower-side {
+  padding: 2em 2em 5em 2em;
+  background: #fff;
+  border-bottom-right-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+/* Pulsanti del card */
+#contBtn, #ripBtn {
+  width: 80%; 
+  padding: 0.8em; 
+  margin: auto;
+  display: block;
+}
+
+#contBtn:hover {
+  box-shadow: 0px 15px 30px rgba(60, 60, 60, 0.4);
+}
+
+/* Pulsanti card RIP */
+#ripBtn {
+  background: #df544a;
+}
+
+#checkmark{
+  fill: #ffffff
+}
+

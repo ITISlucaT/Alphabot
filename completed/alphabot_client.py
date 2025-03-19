@@ -3,7 +3,7 @@ import threading
 import time
 from pynput import keyboard
 
-server_address = ("192.168.1.120", 6971)
+server_address = ("10.210.0.177", 6971)
 BUFFER_SIZE = 4096
 
 # Mappa dei tasti con i comandi corrispondenti
@@ -14,6 +14,8 @@ key_command_map = {
     'a': 'left'
 }
 
+macro_command_map = {}
+
 active_keys = set()  # Insieme di tasti attualmente premuti
 last_command = None  # Variabile per memorizzare l'ultimo comando inviato
 is_connected = True  # Flag per monitorare la connessione
@@ -21,15 +23,15 @@ is_connected = True  # Flag per monitorare la connessione
 def send_command(tcp_client_socket, command):
     """Invia un comando valido al server se è diverso dall'ultimo comando."""
     global last_command  # Permette di modificare la variabile globale
-    
+
     if command != last_command:
         if command in key_command_map.values() or command == "stop" or len(command) > 1:
             message = f"{command}"
             tcp_client_socket.send(message.encode("utf-8"))
             print(f"Inviato: {message}")
             last_command = command  # Aggiorna il comando precedente
-            # else:
-            #     print(f"Errore: comando non valido.")
+        else:
+            print(f"Errore: comando non valido.")
     else:
         print(f"Comando '{command}' già inviato, non invio duplicato.")
 
@@ -37,17 +39,26 @@ def update_command(tcp_client_socket):
     """Aggiorna il comando corrente basato sui tasti attualmente premuti."""
     if active_keys:
         combined_command = "".join(sorted([key_command_map[k] for k in active_keys]))
-        send_command(tcp_client_socket, combined_command)#
+        send_command(tcp_client_socket, combined_command)
     else:
         send_command(tcp_client_socket, "stop")
+
+def send_macro(tcp_client_socket, macro):
+    """Invia una macro al server."""
+    commands = macro.split(",")
+    for command in commands:
+        send_command(tcp_client_socket, command)
+        time.sleep(0.2)  # Intervallo tra i comandi
 
 def on_press(key, tcp_client_socket):
     """Gestisci la pressione di un tasto e aggiorna i comandi."""
     try:
-        k = key.char 
-        #if k in key_command_map:
-        active_keys.add(k)
-        update_command(tcp_client_socket)
+        k = key.char
+        if k in key_command_map:
+            active_keys.add(k)
+            update_command(tcp_client_socket)
+        elif k in macro_command_map:
+            send_macro(tcp_client_socket, macro_command_map[k])
     except AttributeError:
         pass  # Ignora i tasti speciali (Shift, Ctrl, ecc.)
 
@@ -55,7 +66,7 @@ def on_release(key, tcp_client_socket):
     """Gestisci il rilascio di un tasto e aggiorna i comandi."""
     try:
         k = key.char
-        if  k in key_command_map and k in active_keys: #
+        if k in key_command_map and k in active_keys:
             active_keys.remove(k)
             update_command(tcp_client_socket)
     except AttributeError:
@@ -84,10 +95,16 @@ def main():
 
         menu_message = tcp_client_socket.recv(BUFFER_SIZE).decode("utf-8")
         print(menu_message)
-        
-        #heartbeat_thread = threading.Thread(target=send_heartbeat, args=(tcp_client_socket, ))
-        #heartbeat_thread.start()
+        tcp_client_socket.send("mrcvd".encode("utf-8"))
+        macro_commands = eval(tcp_client_socket.recv(BUFFER_SIZE).decode("utf-8"))
+        for command in macro_commands:
+            macro_command_map[command[0]] = command[1]
+        print(macro_command_map)
+
         print("Premi 'w', 'a', 's', 'd' per inviare i comandi, 'Esc' per uscire.")
+        
+        heartbeat_thread = threading.Thread(target=send_heartbeat, args=(tcp_client_socket, ))
+        heartbeat_thread.start()
         
         # Utilizza il listener per i tasti
         with keyboard.Listener(
@@ -99,7 +116,7 @@ def main():
         print("Chiusura client")
     finally:
         is_connected = False  # Imposta il flag a False per fermare il thread di heartbeat
-        #heartbeat_thread.join()
+        heartbeat_thread.join()
         tcp_client_socket.close()
         print("Socket chiuso.")
 

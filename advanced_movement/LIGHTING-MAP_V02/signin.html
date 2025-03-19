@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Lighting Map | Sign In</title>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="assets/styles/base.css">
+  <link rel="stylesheet" href="assets/styles/style_login.css">
+  <script src="assets/scripts/signin.js" defer></script>
+  <link rel="icon" href="./assets/logos/faviconWhite.png" type="image/png" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="./assets/logos/faviconBlack.png" type="image/png" media="(prefers-color-scheme: light)">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+
+</head>
+
+<body>
+    <div id="containerCard"> 
+  <div class="login-box">
+  <div class="containerImg">
+  <img src="./assets/logos/whiteLogoNoBackground.png" alt="Lighting Map">
+</div>
+
+    <h2>Sign In</h2>
+    <form id="login-form">
+      <div class="user-box">
+        <input type="text" name="username" id="inptUsername" required>
+        <label for="inptUsername">Nome</label>
+        
+        
+      </div>
+    <div class="user-box">
+        <input type="text" name="surname" id="inptSurname" required>
+        <label for="inptSurname">Cognome</label>
+    </div>
+    <div class="user-box">
+        <input type="email" name="email" id="inptEmail" required>
+        <label for="inptEmail">Email</label>
+    </div>
+      <div class="user-box">
+      <input type="password" id="password" name="password" required>
+        <label >Password</label>
+         <i id="togglePassword" class="fas fa-eye"></i>
+      </div>
+      <div class="user-box">
+      <input type="password" id="confirmPassword" name="password" required>
+        <label >Conferma password</label>
+         <i id="toggleConfirmPassword" class="fas fa-eye"></i>
+      </div>
+      
+      <span id="alert"></span>
+        <input type="submit" id="btnConferma" value="Conferma">
+        <div class="loader" id="loginLoader"></div>
+      </form>
+  </div>
+  </div>
+</body>
+</html>

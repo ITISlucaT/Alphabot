@@ -1,11 +1,11 @@
 import socket
 import threading
 import time
-import AlphaBot 
+#import AlphaBot 
 import sqlite3
 
 
-server_address = ("192.168.1.120", 6971)
+server_address = ("10.210.0.177", 6971)
 BUFFER_SIZE = 4096
 
 commands_list = ["forward", "backward", "right", "left", "forwardright", "forwardleft", "backwardright", "backwardleft", "stop"]
@@ -22,7 +22,7 @@ HEARTBEAT_TIMEOUT = 2000 # Tempo massimo di attesa tra gli heartbeat (espresso i
 last_heartbeat_time = time.time()  # Variabile globale per tracciare l'ultimo heartbeat
 is_connected = True
 
-ab = AlphaBot.AlphaBot()
+#ab = AlphaBot.AlphaBot()
 
 # Funzione per gestire gli heartbeat
 def handle_heartbeat(conn):
@@ -49,21 +49,30 @@ def handle_commands(conn):
 
             if data in commands_list:
                 print(f"Comando ricevuto: {data}")
-                if data == commands_list[0]: ab.setMotor(50, -40)
-                elif data == commands_list[1]: ab.setMotor(-50, 40)
-                elif data == commands_list[2]: ab.setMotor(50, 0)
-                elif data == commands_list[3]: ab.setMotor(0, -50)
+                
+                if data == commands_list[0]: 
+                    print("avanti")
+                    #ab.setMotor(50, -40)
+                elif data == commands_list[1]: 
+                    print("indietro")
+                    #ab.setMotor(-50, 40)
+                elif data == commands_list[2]: 
+                    print("destra")
+                    #ab.setMotor(0, 50)
+                elif data == commands_list[3]: 
+                    print("sinistra")
+                    #ab.setMotor(-50, 0)
                 elif data == commands_list[4]: 
-                    ab.setMotor(80, -60)
+                    #ab.setMotor(80, 60)
                     print("avanti destra")
                 elif data == commands_list[5]:
-                    ab.setMotor(60, -80)
+                    #ab.setMotor(60, 80)
                     print("avanti sinistra")
                 elif data == commands_list[6]:
-                    ab.setMotor(-70, 50)
+                    #ab.setMotor(-70, -50)
                     print("indietro destra")
                 elif data == commands_list[7]:
-                    ab.setMotor(-50, 70)
+                    #ab.setMotor(-50, -70)
                     print("indietro sinistra")
                 else: 
                     if data in macro_commands:
@@ -77,18 +86,24 @@ def handle_commands(conn):
                                 time_action = int(''.join([c for c in cmd if c.isdigit()]))  # Estrae la parte numerica
                                 if action == commands_list[0]: 
                                     print("avanti")
-                                    ab.forward()
-                                elif action == commands_list[1]: ab.backward()
-                                elif action == commands_list[2]: ab.right()
-                                elif action == commands_list[3]: ab.left()
+                                    #ab.forward()
+                                elif action == commands_list[1]: 
+                                    print("indietro")
+                                    #ab.backward()
+                                elif action == commands_list[2]: 
+                                    print("destra")
+                                    #ab.right()
+                                elif action == commands_list[3]: 
+                                    print("sinistra")
+                                    #ab.left()
                                 time.sleep(time_action)
-                    else:
-                        ab.stop()
-
+                    #else:
+                        #ab.stop()
+                
                 if not data:
                     break  
-            #elif data != "HEARTBEAT":
-            #    print(f"Messaggio sconosciuto: {data}")
+            elif data != "HEARTBEAT":
+                print(f"Messaggio sconosciuto: {data}")
 
             if not data:
                 break
@@ -98,18 +113,18 @@ def handle_commands(conn):
 
 def monitor_heartbeat():
     global last_heartbeat_time, is_connected
-    global ab
+    #global ab
     while True:
         if time.time() - last_heartbeat_time > HEARTBEAT_TIMEOUT:
             print("Heartbeat non ricevuto in tempo! Arresto del robot.")
-            ab.stop()
+            #ab.stop()
             is_connected = False
             break
         time.sleep(HEARTBEAT_TIMEOUT / 2)  # Controlla frequentemente lo stato degli heartbeat
 
 def connect_to_db():
     # Connessione al db
-    conn = sqlite3.connect('db_example.db')
+    conn = sqlite3.connect('./../db_example.db')
     cur = conn.cursor()
 
     cur.execute('''
@@ -142,16 +157,18 @@ def main():
     print(f"Connesso al client {client_address}")
 
     conn.send(menu_message.encode("utf-8"))
+    conn.recv(BUFFER_SIZE).decode("utf-8")
+    conn.send(str(macro_commands).encode("utf-8"))
 
 # N.B. i thread di heartbeat sono daemon, non bisogna chiuderli esplicitamente
-    #heartbeat_thread = threading.Thread(target=handle_heartbeat, args=(conn,), daemon=True)
-    #heartbeat_thread.start()
+    heartbeat_thread = threading.Thread(target=handle_heartbeat, args=(conn,), daemon=True)
+    heartbeat_thread.start()
 
     commands_thread = threading.Thread(target=handle_commands, args=(conn,))
     commands_thread.start()
 
-    #heartbeat_monitor_thread = threading.Thread(target=monitor_heartbeat, daemon=True)
-    #heartbeat_monitor_thread.start()
+    heartbeat_monitor_thread = threading.Thread(target=monitor_heartbeat, daemon=True)
+    heartbeat_monitor_thread.start()
 
     commands_thread.join()
 

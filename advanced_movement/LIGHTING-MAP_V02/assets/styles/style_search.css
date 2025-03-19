@@ -1,0 +1,145 @@
+/* SEARCH BAR CONTAINER */
+#search-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem; /* Spaziatura tra gli elementi */
+    padding: 0.5rem;
+    background: transparent;
+    color: var(--accent-color);
+    width: 100%; /* Occupare l'intera larghezza disponibile */
+    max-width: 768px; /* Larghezza massima */
+    position: relative; /* Permette il posizionamento della suggestion box */
+}
+
+/* INPUT FIELD */
+#search-bar input#input {
+    color: var(--accent-color);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--accent-color);
+    padding: 0.5rem;
+    font-size: 0.9rem; /* Dimensione ridotta */
+    outline: none;
+    flex: 1; /* Permette all'input di espandersi */
+    min-width: 100px; /* Larghezza minima per l'input */
+}
+
+/* SELECT FILTER */
+#search-bar select#searchFilter {
+    color: var(--accent-color);
+    background: transparent;
+    padding: 0.5rem;
+    border: none;
+    border-bottom: 1px solid var(--accent-color);
+    outline: none;
+    min-width: 120px; /* Assicura una larghezza minima */
+}
+
+#search-bar select#searchFilter option {
+    color: var(--accent-color); /* Colore del testo delle opzioni */
+    background-color: var(--primary-color); /* Sfondo delle opzioni */
+}
+
+/* ICON AND BUTTONS */
+#search-bar .icon,
+#search-bar .searchBtn,
+#search-bar .iconArrowLeft,
+#search-bar .iconArrowRight {
+    color: var(--accent-color);
+    background: transparent;
+    font-size: 1.2rem; /* Dimensione ridotta per le icone */
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+/* SUGGESTION BOX */
+#suggestions {
+    position: absolute; /* Cambiato da relative a absolute */
+    top: calc(100% + 0.3rem); /* Posizionamento sotto l'input */
+    left: 0;
+    width: 100%; /* Adattato per occupare tutta la larghezza del div */
+    background-color: rgba(54, 54, 54, 0.95);
+    color: white;
+    border-radius: 0 0 0.5rem 0.5rem;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    overflow: auto; /* Nasconde la barra di scorrimento */
+    max-height: 150px;
+    display: none; /* Nasconde il box delle suggerimenti per impostazione predefinita */
+}
+
+/* Nascondi la barra di scorrimento nei browser Webkit */
+#suggestions::-webkit-scrollbar {
+    display: none; /* Nasconde la barra di scorrimento */
+}
+
+#suggestions.active {
+    display: block; /* Mostra il box quando attivo */
+}
+
+
+#suggestions.active {
+    display: block; /* Mostra il box quando attivo */
+}
+
+/* Stile per ciascun suggerimento */
+.suggestion-item {
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.suggestion-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* MEDIA QUERIES PER DISPOSITIVI PIÙ PICCOLI */
+@media (max-width: 576px) {
+    /* Riduci ulteriormente le dimensioni dell'input e delle icone */
+    #search-bar input#input {
+        font-size: 0.8rem; /* Ulteriore riduzione della dimensione del font */
+        padding: 0.1rem; /* Riduzione del padding */
+    }
+
+    #search-bar .icon,
+    #search-bar .searchBtn {
+        font-size: 1rem; /* Dimensione ulteriore riduzione per le icone */
+    }
+
+    #search-bar select#searchFilter {
+        min-width: 100px; /* Larghezza minima per la select */
+    }
+
+    #search-bar label {
+        font-size: 0.8rem; /* Riduci anche la dimensione della label per dispositivi piccoli */
+    }
+
+    #search-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0rem; 
+        padding: 1.5rem;
+        background: transparent;
+        color: var(--accent-color);
+        width: 100%;
+        max-width: 100%;
+        position: absolute;
+    }
+
+    #btnLogout {
+        display: none !important;
+    }
+}
+
+.material-symbols-outlined {
+    cursor: pointer;
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 100,
+  'GRAD' 0,
+  'opsz' 20
+  
+}

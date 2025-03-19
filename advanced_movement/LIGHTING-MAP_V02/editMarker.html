@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Modifica il punto</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="./assets/styles/base.css">
+  <link rel="stylesheet" href="./assets/styles/style_index.css">
+  <link rel="stylesheet" href="./assets/styles/style_reports.css">
+
+    </head>
+    <body>
+    <div id="divFormContainer">
+        
+    </div>
+    <form id="formEdit">
+        <input type="text" value="">
+    </form>
+
+    </body>
+    <script>
+        const BASE_URL = 'https://lighting-map.glitch.me'; 
+        const formEdit = document.getElementById("formEdit");
+        
+        const translation_report_type = {
+            "LIGHT_POINT_OFF": "Punto luce spento",
+            "PLANT_OFF": "Impianto spento",
+            "DAMAGED_COMPLEX": "Complesso danneggiato",
+            "DAMAGED_SUPPORT": "Morsettiera rotta",
+            "BROKEN_TERMINAL_BLOCK": "Sostegno danneggiato",
+            "BROKEN_PANEL": "Quadro danneggiato",
+            "OTHER": "Altro"
+        }  
+
+        function translateString(englishString) {
+            return translation_report_type[englishString] || englishString;
+            }
+
+
+        function getQueryParams() {
+            let params = {};
+            let queryString = window.location.search.substring(1);
+            let queries = queryString.split("&");
+            for (let i = 0; i < queries.length; i++) {
+                let pair = queries[i].split("=");
+                params[pair[0]] = decodeURIComponent(pair[1]);
+            }
+            return params;
+        }
+
+        
+        
+        function checkUserType() {
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            if (userData.user_type !== "SUPER_ADMIN"){
+                createCard("Non possiedi i diritti necessari per accedere a quest'area", false, false)
+                return false;
+            }else{
+                return true;
+            }
+        }
+
+        async function getData(th, n_pl) {
+            try {
+                const response = await fetch(`${BASE_URL}/townHalls/lightpoints/getPoint/?name=${th}&numero_palo=${n_pl}`)
+                if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+                }
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('There has been a problem with your fetch operation:', error);
+            }
+        }
+
+        async function createForm(){
+            const response = await getData(params.comune, params.numeroPalo);
+
+            let formContent = Object.entries(response)
+            .filter(([_key, value]) => (value ?? false) && (!Array.isArray(value) || value.length > 0))
+            .map(([key, value]) => {
+                if (Array.isArray(value)) {
+                    // Crea un elenco per gli array non vuoti
+                    const listItems = value.reverse().map(item => {
+                        if (item.report_type) {
+                            const dateString = transformDateToIT(item.report_date);
+                            return `<li class="list-item">${dateString} - ${translateString(item.report_type)}</li>`;
+                        } else if (item.operation_type) {
+                            const dateString = transformDateToIT(item.operation_date);
+                            return `<li class="list-item">${dateString} - ${translateString(item.operation_type)}</li>`;
+                        } else {
+                            return `<li class="list-item">${translateString(item)}</li>`;
+                        }
+                    }).join('');
+                    
+                    return `<strong>${key}:</strong><ul class="list-container">${listItems}</ul>`;
+                } else {
+                    if (key !== "_id") return `<label for ="id_${value}">${key}:</label> <input type="text" value="${value}" id="id_${value}" class="base-input"></input>`;
+                }
+            })
+            .join('<br>');
+            formEdit.insertAdjacentHTML('afterBegin', formContent);
+        }
+
+
+        function clearAllChildren(elem) {
+            while (elem.firstChild) {
+                elem.removeChild(elem.firstChild);
+            }
+        }
+
+        function createCard(msgText, isSuccess  = true, retry = true) {
+            const divFormContainer = document.getElementById('divFormContainer');
+
+            const card = document.createElement('div');
+            card.id = 'card';
+            card.className = 'animated fadeIn';
+
+            const upperSide = document.createElement('div');
+            upperSide.id = 'upper-side';
+
+            let svg, status;
+            if (isSuccess) {
+                upperSide.style.backgroundColor = '#57A773';
+                svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('version', '1.1');
+                svg.setAttribute('id', 'checkmark');
+                svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+                svg.setAttribute('x', '0px');
+                svg.setAttribute('y', '0px');
+                svg.setAttribute('xml:space', 'preserve');
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', 'M131.583,92.152l-0.026-0.041c-0.713-1.118-2.197-1.447-3.316-0.734l-31.782,20.257l-4.74-12.65 c-0.483-1.29-1.882-1.958-3.124-1.493l-0.045,0.017c-1.242,0.465-1.857,1.888-1.374,3.178l5.763,15.382 c0.131,0.351,0.334,0.65,0.579,0.898c0.028,0.029,0.06,0.052,0.089,0.08c0.08,0.073,0.159,0.147,0.246,0.209 c0.071,0.051,0.147,0.091,0.222,0.133c0.058,0.033,0.115,0.069,0.175,0.097c0.081,0.037,0.165,0.063,0.249,0.091 c0.065,0.022,0.128,0.047,0.195,0.063c0.079,0.019,0.159,0.026,0.239,0.037c0.074,0.01,0.147,0.024,0.221,0.027 c0.097,0.004,0.194-0.006,0.292-0.014c0.055-0.005,0.109-0.003,0.163-0.012c0.323-0.048,0.641-0.16,0.933-0.346l34.305-21.865 C131.967,94.755,132.296,93.271,131.583,92.152z');
+                svg.appendChild(path);
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('fill', 'none');
+                circle.setAttribute('stroke', '#ffffff');
+                circle.setAttribute('stroke-width', '5');
+                circle.setAttribute('stroke-miterlimit', '10');
+                circle.setAttribute('cx', '109.486');
+                circle.setAttribute('cy', '104.353');
+                circle.setAttribute('r', '32.53');
+                svg.appendChild(circle);
+                status = document.createElement('h3');
+                status.id = 'status';
+                status.textContent = 'Successo';
+            }else{
+                upperSide.style.backgroundColor = '#D75A4A';
+                const svgNS = "http://www.w3.org/2000/svg";
+                svg = document.createElementNS(svgNS, 'svg');
+                svg.setAttribute('version', '1.1');
+                svg.setAttribute('id', 'error-icon');
+                svg.setAttribute('viewBox', '0 0 50 50');
+                svg.setAttribute('xml:space', 'preserve');
+
+                const circle = document.createElementNS(svgNS, 'circle');
+                circle.setAttribute('style', 'fill:#D75A4A;');
+                circle.setAttribute('cx', '25');
+                circle.setAttribute('cy', '25');
+                circle.setAttribute('r', '25');
+                svg.appendChild(circle);
+
+                const polyline1 = document.createElementNS(svgNS, 'polyline');
+                polyline1.setAttribute('style', 'fill:none;stroke:#FFFFFF;stroke-width:2;stroke-linecap:round;stroke-miterlimit:10;');
+                polyline1.setAttribute('points', '16,34 25,25 34,16');
+                svg.appendChild(polyline1);
+
+                const polyline2 = document.createElementNS(svgNS, 'polyline');
+                polyline2.setAttribute('style', 'fill:none;stroke:#FFFFFF;stroke-width:2;stroke-linecap:round;stroke-miterlimit:10;');
+                polyline2.setAttribute('points', '16,16 25,25 34,34');
+                svg.appendChild(polyline2);
+                status = document.createElement('h3');
+                status.id = 'status';
+                status.textContent = 'Errore';
+
+            }
+        upperSide.appendChild(svg);
+        upperSide.appendChild(status);
+
+        const lowerSide = document.createElement('div');
+        lowerSide.id = 'lower-side';
+
+        const message = document.createElement('p');
+        message.id = 'message';
+        message.textContent = msgText;
+        if(!isSuccess && retry){ 
+            const ripBtn = document.createElement('a');
+            ripBtn.id = 'ripBtn';
+            ripBtn.textContent = 'Riprova';
+            ripBtn.href = "#"; 
+            ripBtn.onclick = function() {
+            window.location.reload(); 
+            };
+            lowerSide.appendChild(ripBtn);
+        }
+
+        const contBtn = document.createElement('a');
+        contBtn.href = 'resource.html';
+        contBtn.id = 'contBtn';
+        contBtn.textContent = 'Torna alla home';
+
+        lowerSide.appendChild(message);
+        
+        lowerSide.appendChild(contBtn);
+
+        card.appendChild(upperSide);
+        card.appendChild(lowerSide);
+
+        divFormContainer.appendChild(card);
+
+}
+    const params = getQueryParams()
+    if(checkUserType()){
+        createForm()
+      }
+    </script>
+</html>

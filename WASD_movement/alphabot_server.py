@@ -35,10 +35,10 @@ try:
        
         data = conn.recv(BUFFER_SIZE).decode("utf-8")
         
-        if data == commands_list[0]: alphaB.forward()
-        elif data == commands_list[1]: alphaB.backward()
-        elif data == commands_list[2]: alphaB.right()
-        elif data == commands_list[3]: alphaB.left()
+        if data == commands_list[0]: alphaB.setMotor(100, -80)
+        elif data == commands_list[1]: alphaB.setMotor(-100, 80)
+        elif data == commands_list[2]: alphaB.setMotor(0, 100)
+        elif data == commands_list[3]: alphaB.setMotor(100, 0)
         else: alphaB.stop()
 
         if not data:

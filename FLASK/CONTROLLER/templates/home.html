@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <title>Robot Controller</title>
+  <style>
+    /* Stili base per la UI */
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-color: #080710;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .container {
+      width: 400px;
+      background-color: rgba(255, 255, 255, 0.13);
+      padding: 30px;
+      color: white;
+      text-align: center;
+      border-radius: 10px;
+    }
+
+    .btn {
+      background-color: rgba(255, 255, 255, 0.07);
+      border: none;
+      padding: 15px;
+      font-size: 24px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .btn:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h3>Benvenuto, {{ username }}!</h3>
+    <p id="statusText">Stato: In attesa di comando</p>
+
+    <!-- Controlli di movimento -->
+    <div>
+      <button class="btn" id="forward">▲</button>
+    </div>
+    <div>
+      <button class="btn" id="left">◄</button>
+      <button class="btn" id="stop">■</button>
+      <button class="btn" id="right">►</button>
+    </div>
+    <div>
+      <button class="btn" id="backward">▼</button>
+    </div>
+    
+    <!-- Logout -->
+    <form action="{{ url_for('logout') }}" method="get">
+      <button type="submit" class="btn" style="background-color: red;">Logout</button>
+    </form>
+  </div>
+
+  <script>
+    // Mappa dei pulsanti e gestione degli eventi
+    const buttons = {
+      forward: 'avanti',
+      left: 'sinistra',
+      stop: 'stop',
+      right: 'destra',
+      backward: 'indietro'
+    };
+
+    Object.keys(buttons).forEach(id => {
+      document.getElementById(id).addEventListener('click', () => sendCommand(buttons[id]));
+    });
+
+    function sendCommand(direction) {
+      document.getElementById('statusText').textContent = `Stato: Movimento ${direction}`;
+      fetch('/move', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ direction })
+      }).then(response => response.json())
+        .then(data => document.getElementById('statusText').textContent = `Stato: ${data.message}`)
+        .catch(error => console.error('Errore:', error));
+    }
+  </script>
+</body>
+</html>
