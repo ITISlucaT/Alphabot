@@ -1,89 +1,296 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <title>Robot Controller</title>
-  <style>
-    /* Stili base per la UI */
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background-color: #080710;
-      font-family: 'Poppins', sans-serif;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaBot Controller</title>
+    <style>
+        :root {
+            --primary-blue: #2196f3;
+            --dark-blue: #1565c0;
+            --black-bg: #121212;
+            --glass-bg: rgba(33, 150, 243, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.125);
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+        }
 
-    .container {
-      width: 400px;
-      background-color: rgba(255, 255, 255, 0.13);
-      padding: 30px;
-      color: white;
-      text-align: center;
-      border-radius: 10px;
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    .btn {
-      background-color: rgba(255, 255, 255, 0.07);
-      border: none;
-      padding: 15px;
-      font-size: 24px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--black-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
 
-    .btn:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-    }
-  </style>
+        /* Glassmorphic background effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            right: -50%;
+            bottom: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-radial-gradient(
+                circle at center, 
+                transparent 0, 
+                var(--black-bg) 50%, 
+                transparent 100%
+            );
+            animation: backgroundMove 20s linear infinite;
+            z-index: -2;
+        }
+
+        @keyframes backgroundMove {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .container {
+            background: var(--glass-bg);
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 2rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .controller {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 15px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        button {
+            width: 100%;
+            height: 80px;
+            font-size: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, var(--primary-blue), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        button:hover::before {
+            opacity: 0.2;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        #stop {
+            background-color: rgba(231, 76, 60, 0.2);
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        #stop:hover {
+            background-color: rgba(231, 76, 60, 0.3);
+        }
+
+        #up { grid-column: 2; grid-row: 1; }
+        #left { grid-column: 1; grid-row: 2; }
+        #right { grid-column: 3; grid-row: 2; }
+        #down { grid-column: 2; grid-row: 3; }
+
+        .status {
+            margin-top: 20px;
+            padding: 12px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .logout-btn {
+            margin-left: 10px;
+            padding: 6px 12px;
+            background: rgba(231, 76, 60, 0.2);
+            color: var(--text-primary);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .logout-btn:hover {
+            background: rgba(231, 76, 60, 0.3);
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .user-info {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-bottom: 15px;
+            }
+
+            .controller {
+                gap: 10px;
+            }
+
+            button {
+                height: 70px;
+                font-size: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h3>Benvenuto, {{ username }}!</h3>
-    <p id="statusText">Stato: In attesa di comando</p>
-
-    <!-- Controlli di movimento -->
-    <div>
-      <button class="btn" id="forward">▲</button>
-    </div>
-    <div>
-      <button class="btn" id="left">◄</button>
-      <button class="btn" id="stop">■</button>
-      <button class="btn" id="right">►</button>
-    </div>
-    <div>
-      <button class="btn" id="backward">▼</button>
+    <div class="user-info">
+        <span>Benvenuto, {{ username }}!</span>
+        <a href="/logout" class="logout-btn">Logout</a>
     </div>
     
-    <!-- Logout -->
-    <form action="{{ url_for('logout') }}" method="get">
-      <button type="submit" class="btn" style="background-color: red;">Logout</button>
-    </form>
-  </div>
+    <div class="container">
+        <h1>AlphaBot Controller</h1>
+        <div class="controller">
+            <button id="up">↑</button>
+            <button id="left">←</button>
+            <button id="stop">■</button>
+            <button id="right">→</button>
+            <button id="down">↓</button>
+        </div>
+        <div class="status" id="status">Stato: Pronto</div>
+    </div>
 
-  <script>
-    // Mappa dei pulsanti e gestione degli eventi
-    const buttons = {
-      forward: 'avanti',
-      left: 'sinistra',
-      stop: 'stop',
-      right: 'destra',
-      backward: 'indietro'
-    };
+    <script>
+        const upButton = document.getElementById('up');
+        const leftButton = document.getElementById('left');
+        const stopButton = document.getElementById('stop');
+        const rightButton = document.getElementById('right');
+        const downButton = document.getElementById('down');
+        const statusElement = document.getElementById('status');
 
-    Object.keys(buttons).forEach(id => {
-      document.getElementById(id).addEventListener('click', () => sendCommand(buttons[id]));
-    });
+        // Funzione per inviare i comandi
+        function sendCommand(command) {
+            statusElement.textContent = `Stato: Comando in invio - ${command}`;
+            
+            fetch('/comando', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ action: command }),
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    throw new Error('Sessione scaduta. Effettua nuovamente il login.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                statusElement.textContent = `Stato: ${data.status}`;
+            })
+            .catch(error => {
+                statusElement.textContent = `Stato: Errore - ${error.message}`;
+            });
+        }
 
-    function sendCommand(direction) {
-      document.getElementById('statusText').textContent = `Stato: Movimento ${direction}`;
-      fetch('/move', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ direction })
-      }).then(response => response.json())
-        .then(data => document.getElementById('statusText').textContent = `Stato: ${data.message}`)
-        .catch(error => console.error('Errore:', error));
-    }
-  </script>
+        // Aggiunta degli event listener per mouse e touch
+        function setupButton(button, command) {
+            // Per mouse
+            button.addEventListener('mousedown', () => sendCommand(command));
+            button.addEventListener('mouseup', () => sendCommand('stop'));
+            button.addEventListener('mouseleave', () => sendCommand('stop'));
+            
+            // Per touch
+            button.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                sendCommand(command);
+            });
+            button.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                sendCommand('stop');
+            });
+        }
+
+        // Configura i pulsanti direzionali
+        setupButton(upButton, 'avanti');
+        setupButton(leftButton, 'sinistra');
+        setupButton(rightButton, 'destra');
+        setupButton(downButton, 'indietro');
+
+        stopButton.addEventListener('click', () => sendCommand('stop'));
+    </script>
 </body>
 </html>

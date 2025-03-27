@@ -1,140 +1,163 @@
-# app.py - Flask backend per il controllo del robot
-##########
-
-#Author: Torelli Luca Augusto & Giordano Pietro
-
-#Date: 139-03-2025
-
-#Description: Flask backend per il controllo del robot
-
-##########
-
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
+from flask import Flask, render_template, request, redirect, url_for, make_response, jsonify
+import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
-from scripts import db
-import datetime
 import jwt
-from AlphaBot import AlphaBot 
+import datetime
+import RPi.GPIO as GPIO
+from AlphaBot import AlphaBot  
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'  # TODO: Sostituire con una variabile d'ambiente per sicurezza
-SECRET_KEY = 'jwtsecretkey' 
+app.config['SECRET_KEY'] = 'torpit'  
+bot = AlphaBot()  # Crea un'istanza dell'AlphaBot
 
-def generate_jwt(username):
-    """Genera un token JWT valido per 1 ora."""
+#Funzione che genera il token con lo username e la data di scadenza
+def generate_token(username):
     payload = {
-        "sub": username,
-        "iat": datetime.datetime.utcnow(),
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        'username': username,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1)  # Token scade in 1 giorno
     }
-    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+    return jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
-def verify_jwt(token):
-    """Verifica il token JWT e restituisce il nome utente se valido."""
+
+#Funzione che verifica il token e restituisce l'username se valido, altrimenti None
+def verify_token(token):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        return payload["sub"]
+        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        return payload['username']
     except jwt.ExpiredSignatureError:
         return None
     except jwt.InvalidTokenError:
         return None
 
-@app.route("/", methods=["GET"])
+
+#Route per la home page, controlla se l'utente è loggato con il token valido
+@app.route('/', methods=['GET'])
 def home():
-    """Renderizza la homepage se l'utente è autenticato."""
-    token = request.cookies.get("jwt")
-    if not token:
-        return redirect(url_for("login"))
-    
-    username = verify_jwt(token)
-    if username:
-        return render_template("home.html", username=username)
+    token = request.cookies.get('token')
+    username = verify_token(token)
+    if not username:
+        return redirect(url_for('login'))
+    return render_template('home.html', username=username)
 
-    flash("Sessione scaduta, esegui nuovamente il login.", "error")
-    return redirect(url_for("login"))
 
-@app.route("/login", methods=["GET", "POST"])
+#Route per la pagina di login
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Gestisce il login dell'utente."""
-    if request.method == "POST":
-        conn, cursor = db.connect_to_db()
-        username = request.form.get("e-mail")
-        password = request.form.get("password")
-        
-        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-        user = cursor.fetchone()
-        conn.close()
-        
-        if user and check_password_hash(user[2], password):
-            token = generate_jwt(username)
-            response = make_response(redirect(url_for("home")))
-            expiry = datetime.datetime.now() + datetime.timedelta(hours=1)
-            response.set_cookie("jwt", token, httponly=True, expires=expiry)
-            return response
+    if request.method == 'POST':
+        username = request.form['e-mail']
+        password = request.form['password']
+        return validate(username, password)
+    return render_template('login.html')
 
-        flash("Username o password non corretti.", "error")
+#Funzione che controlla username e password dal db 
+def validate(username, password):
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    psw = c.execute('SELECT psw FROM users WHERE username = ?', (username,)).fetchone()
+    conn.close()
     
-    return render_template("login.html")
+    if psw and check_password_hash(psw[0], password):
+        token = generate_token(username)
+        response = make_response(redirect(url_for('home')))
+        response.set_cookie('token', token, max_age=60*60*24, httponly=True)
+        return response
+    else:
+        alert = "Credenziali non valide!"
+        return render_template('login.html', alert=alert)
 
-@app.route("/create_account", methods=["GET", "POST"])
+
+# Route per la pagina di creazione di un account
+@app.route('/create_account', methods=['GET', 'POST'])
 def create_account():
-    """Gestisce la registrazione di nuovi utenti."""
-    if request.method == "POST":
-        username = request.form.get("e-mail")
-        password = request.form.get("password")
+    if request.method == 'POST':
+        username = request.form['e-mail']
+        password = request.form['password']
+        hashed_password = generate_password_hash(password)
         
-        conn, cursor = db.connect_to_db()
-        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-        if cursor.fetchone():
-            return render_template("create_account.html", error="Username already exists.")
+        conn = sqlite3.connect('users.db')
+        c = conn.cursor()
+        # Controlla se l'utente esiste già
+        existing_user = c.execute('SELECT username FROM users WHERE username = ?', (username,)).fetchone()
+        if existing_user:
+            conn.close()
+            return render_template('create_account.html', alert="Utente già esistente!")
         
-        hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
-        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
+        c.execute('INSERT INTO users (username, psw) VALUES (?, ?)', (username, hashed_password))
         conn.commit()
         conn.close()
-        return redirect(url_for("login"))
+        return redirect(url_for('login'))
     
-    return render_template("create_account.html")
+    return render_template('create_account.html')
 
-@app.route("/logout")
+
+# Route per la pagina di logout
+@app.route('/logout', methods=['GET', 'POST'])
 def logout():
-    """Gestisce il logout dell'utente rimuovendo il token."""
-    response = make_response(redirect(url_for("login")))
-    response.delete_cookie("jwt")
-    flash("Logout effettuato.", "success")
+    response = make_response(redirect(url_for('login')))
+    response.delete_cookie('token')
     return response
 
-@app.route("/move", methods=["POST"])
-def move_robot():
-    """Endpoint API per controllare il movimento del robot."""
-    token = request.cookies.get("jwt")
-    if not token:
-        return jsonify({"error": "Non autorizzato"}), 401
-    
-    username = verify_jwt(token)
+#Nuova rotta per gestire i comandi dell'AlphaBot
+@app.route('/comando', methods=['POST'])
+def comando():
+    # Verifica l'autenticazione
+    token = request.cookies.get('token')
+    username = verify_token(token)
     if not username:
-        return jsonify({"error": "Sessione scaduta"}), 401
+        return jsonify({'status': 'Non autorizzato'}), 401
     
-    data = request.get_json()
-    if not data or 'direction' not in data:
-        return jsonify({"error": "Dati mancanti"}), 400
-    
-    direction = data['direction']
-    print(f"Direzione ricevuta: {direction}")
-    
-    ab = AlphaBot()
-    if direction == "avanti":
-        ab.forward()
-    elif direction == "indietro":
-        ab.backward()
-    elif direction == "destra":
-        ab.right()
-    elif direction == "sinistra":
-        ab.left()
-    elif direction == "stop":
-        ab.stop()
-    
-    return jsonify({"message": f"Robot in movimento: {direction}"})
+    try:
+        # Imposta il modo GPIO qui per assicurarsi che sia correttamente configurato prima di ogni comando
+        try:
+            GPIO.setmode(GPIO.BCM)
+        except RuntimeError:
+            # Se il modo è già impostato, possiamo continuare
+            pass
+        
+        data = request.get_json()
+        action = data.get('action')
+        
+        if action == 'avanti':
+            bot.forward()
+            response = {'status': 'Il robot si muove in avanti'}
+        elif action == 'indietro':
+            bot.backward()
+            response = {'status': 'Il robot si muove indietro'}
+        elif action == 'sinistra':
+            bot.left()
+            response = {'status': 'Il robot gira a sinistra'}
+        elif action == 'destra':
+            bot.right()
+            response = {'status': 'Il robot gira a destra'}
+        elif action == 'stop':
+            bot.stop()
+            response = {'status': 'Il robot si è fermato'}
+        else:
+            return jsonify({'status': 'Comando non riconosciuto'}), 400
+            
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({'status': f'Errore: {str(e)}'}), 500
 
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=4444)
+
+def init_db():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    password = generate_password_hash("1234")
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        psw TEXT NOT NULL
+    );''')
+
+    c.execute('''INSERT INTO users (username, psw) VALUES ("aaa@aaa.a", ?)''', (password,))
+    conn.commit()
+    conn.close()
+
+if __name__ == '__main__':
+    try:
+        #init_db()
+        app.run(debug=True, host='0.0.0.0', port=4444)
+    finally:
+        GPIO.cleanup()  
