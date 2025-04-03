@@ -106,14 +106,7 @@ def comando():
     if not username:
         return jsonify({'status': 'Non autorizzato'}), 401
     
-    try:
-        # Imposta il modo GPIO qui per assicurarsi che sia correttamente configurato prima di ogni comando
-        try:
-            GPIO.setmode(GPIO.BCM)
-        except RuntimeError:
-            # Se il modo è già impostato, possiamo continuare
-            pass
-        
+    try:        
         data = request.get_json()
         action = data.get('action')
         
