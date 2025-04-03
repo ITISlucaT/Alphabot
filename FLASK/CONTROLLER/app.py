@@ -1,3 +1,9 @@
+'''
+Author: Torelli Luca Augusto & Giordano Pietro
+Date: 13/03/2025
+'''
+
+
 from flask import Flask, render_template, request, redirect, url_for, make_response, jsonify
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
